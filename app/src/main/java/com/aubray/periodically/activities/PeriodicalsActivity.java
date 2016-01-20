@@ -24,8 +24,8 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.aubray.periodically.R;
-import com.aubray.periodically.model.Account;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.User;
 import com.aubray.periodically.notifier.PeriodicalNotificationService;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
@@ -75,14 +75,14 @@ public class PeriodicalsActivity extends AppCompatActivity
     }
 
     private void load() {
-        Optional<Account> account = localStore.getAccount();
+        Optional<User> user = localStore.getUser();
 
-        if (!account.isPresent()) {
+        if (!user.isPresent()) {
             // send to login if not logged in
             Intent intent = new Intent(PeriodicalsActivity.this, LoginActivity.class);
             startActivity(intent);
         } else {
-            cloudStore.addPeriodicalsListener(account.get().email, new Callback<List<Periodical>>() {
+            cloudStore.addPeriodicalsListener(user.get(), new Callback<List<Periodical>>() {
                 @Override
                 public void receive(List<Periodical> periodicals) {
                     ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress);
@@ -112,9 +112,9 @@ public class PeriodicalsActivity extends AppCompatActivity
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Optional<Account> account = localStore.getAccount();
-                                if (account.isPresent()) {
-                                    clickedPeriodical.didIt(account.get().email, System.currentTimeMillis());
+                                Optional<User> user = localStore.getUser();
+                                if (user.isPresent()) {
+                                    clickedPeriodical.didIt(user.get(), System.currentTimeMillis());
                                     cloudStore.savePeriodical(clickedPeriodical);
 
                                     NotificationManager mNotificationManager =
@@ -188,7 +188,7 @@ public class PeriodicalsActivity extends AppCompatActivity
 
         if (id == R.id.nav_account) {
             Intent intent;
-            if (localStore.getAccount().isPresent()) {
+            if (localStore.getUser().isPresent()) {
                 intent = new Intent(this, LogoutActivity.class);
             } else {
                 intent = new Intent(this, LoginActivity.class);
@@ -215,7 +215,7 @@ public class PeriodicalsActivity extends AppCompatActivity
         am.cancel(pi);
 
         am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    SystemClock.elapsedRealtime() + 60*1000,
+                    SystemClock.elapsedRealtime() + 60 * 1000,
                     AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi);
     }
 

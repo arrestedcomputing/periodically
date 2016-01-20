@@ -52,4 +52,8 @@ public class User {
                 ", familyName='" + familyName + '\'' +
                 '}';
     }
+
+    public String fullName() {
+        return givenName + " " + familyName;
+    }
 }

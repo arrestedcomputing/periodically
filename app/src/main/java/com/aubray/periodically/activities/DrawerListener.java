@@ -8,7 +8,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.aubray.periodically.R;
-import com.aubray.periodically.model.Account;
+import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.LocalStore;
 import com.aubray.periodically.store.PreferencesLocalStore;
 import com.google.common.base.Optional;
@@ -31,14 +31,15 @@ public class DrawerListener extends DrawerLayout.SimpleDrawerListener {
     }
 
     void updateAccount() {
-        Optional<Account> account = localStore.getAccount();
+        Optional<User> account = localStore.getUser();
 
         TextView emailView = (TextView) activity.findViewById(R.id.email);
         TextView userNameView = (TextView) activity.findViewById(R.id.userName);
 
         if (account.isPresent()) {
-            emailView.setText(account.get().email);
-            userNameView.setText(account.get().userName);
+            User user = account.get();
+            emailView.setText(user.getEmail());
+            userNameView.setText(user.fullName());
         } else {
             emailView.setText("noone@nowhere.com");
             userNameView.setText("No One Kenobi");

@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 
 import com.aubray.periodically.model.Period;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.User;
 import com.aubray.periodically.util.TimeUnit;
 
 import org.joda.time.Duration;
@@ -21,6 +22,10 @@ import static org.joda.time.Duration.standardMinutes;
 
 @RunWith(JUnit4.class)
 public class PeriodicalsTest {
+
+    public static final User BUSE_1 = new User("123", "buse1", "", "");
+    public static final User BUSE_2 = new User("456", "buse2", "", "");
+
     @Test
     public void testPeriodicalWithNoEvents() throws Exception {
         Instant createInstant = Instant.parse("2015-10-20T01:00:00.000Z");
@@ -42,8 +47,8 @@ public class PeriodicalsTest {
         Periodical periodical = new Periodical("id", "Test Periodical", createInstant.getMillis());
         periodical.setPeriod(new Period(Minutes, 10));
 
-        periodical.didIt("buse1", createInstant.plus(standardMinutes(2)).getMillis());
-        periodical.didIt("buse2", createInstant.plus(standardMinutes(4)).getMillis());
+        periodical.didIt(BUSE_1, createInstant.plus(standardMinutes(2)).getMillis());
+        periodical.didIt(BUSE_2, createInstant.plus(standardMinutes(4)).getMillis());
 
         assertThat(Periodicals.getLastEvent(periodical).get().getUser()).isEqualTo("buse2");
 
@@ -67,11 +72,11 @@ public class PeriodicalsTest {
     @Test
     public void testPeriodicalsSortedCorrectly2() throws Exception {
         Periodical p1 = makePeriodical(new Instant(0), "id1", 100);
-        p1.didIt("buse", 1); // due 101
+        p1.didIt(BUSE_1, 1); // due 101
         Periodical p2 = makePeriodical(new Instant(0), "id2", 10);
-        p2.didIt("buse", 70); // due 80
+        p2.didIt(BUSE_1, 70); // due 80
         Periodical p3 = makePeriodical(new Instant(0), "id3", 50);
-        p3.didIt("buse", 90); // due 140
+        p3.didIt(BUSE_1, 90); // due 140
 
         List<Periodical> sorted = Periodicals.NEXT_DUE_FIRST.sortedCopy(Arrays.asList(p1, p2, p3));
         assertThat(sorted).containsExactly(p2, p1, p3).inOrder();

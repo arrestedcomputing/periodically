@@ -14,11 +14,13 @@ public interface CloudStore {
 
     void savePeriodical(Periodical periodical);
 
-    void addPeriodicalsListener(String user, Callback<List<Periodical>> callback);
+    void addPeriodicalsListener(User user, Callback<List<Periodical>> callback);
 
     void deletePeriodical(String id);
 
     void googleLogin(String token, Callback<User> callback);
+
+    void googleLogout();
 
     void lookUpUserByEmail(String email, final Callback<User> callback);
 

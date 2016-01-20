@@ -49,7 +49,7 @@ public class EventArrayAdapter extends ArrayAdapter<Event> {
         final Event event = data.get(position);
         final TextView userNameView = (TextView) convertView.findViewById(R.id.user_text);
 
-        cloudStore.lookUpUserByEmail(event.getUser(), new Callback<User>() {
+        cloudStore.lookUpUserByUid(event.getUser(), new Callback<User>() {
             @Override
             public void receive(User user) {
                 userNameView.setText(user.getGivenName());

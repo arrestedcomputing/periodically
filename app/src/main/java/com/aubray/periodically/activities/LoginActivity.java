@@ -1,5 +1,6 @@
 package com.aubray.periodically.activities;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -74,7 +75,13 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         }
     }
 
+    ProgressDialog ringProgressDialog;
+
     private void signIn() {
+        ringProgressDialog =
+                ProgressDialog.show(this, "Logging in with Google ...", "Please wait ...", true);
+        ringProgressDialog.setCancelable(true);
+
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
@@ -99,24 +106,18 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 @Override
                 public void receive(User user) {
                     localStore.setUser(user);
+                    Toast.makeText(LoginActivity.this,
+                            "Signed in as " + user.getEmail(), Toast.LENGTH_LONG).show();
+                    ringProgressDialog.dismiss();
+                    startActivity(new Intent(LoginActivity.this, PeriodicalsActivity.class));
                 }
             });
-
-            // handle users who have no photo
-            String photoUrl = acct.getPhotoUrl() == null
-                    ? "http://developer.android.com/assets/images/android_logo.png"
-                    : acct.getPhotoUrl().getPath();
-
-            localStore.setAccount(acct.getDisplayName(), acct.getEmail(), photoUrl);
-            Toast.makeText(this, "Signed in as " + acct.getEmail(), Toast.LENGTH_LONG).show();
         } else {
             // Signed out
-            localStore.clearAccount();
+            localStore.clearUser();
+            ringProgressDialog.dismiss();
             Toast.makeText(this, "Failed to sign in: " + result.toString(), Toast.LENGTH_LONG).show();
         }
-
-        Intent intent = new Intent(this, PeriodicalsActivity.class);
-        startActivity(intent);
     }
 }
 

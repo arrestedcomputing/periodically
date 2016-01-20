@@ -2,16 +2,19 @@ package com.aubray.periodically.store;
 
 import android.content.Context;
 
-import com.aubray.periodically.model.Account;
 import com.aubray.periodically.model.User;
 import com.google.common.base.Optional;
 
 /**
- * Created by buse on 12/21/15.
+ * Todo
  */
 public class PreferencesLocalStore implements LocalStore {
-
-    public static final String PREF_TAG = "com.aubray.periodically";
+    public static final String PREF_TAG = "com.aubray.periodically.0";
+    public static final String UID = "uid";
+    public static final String EMAIL = "email";
+    public static final String GIVEN_NAME = "givenName";
+    public static final String FAMILY_NAME = "familyName";
+    public static final String PHOTO_URL = "photoUrl";
     private final Context context;
 
     public PreferencesLocalStore(Context context) {
@@ -19,40 +22,45 @@ public class PreferencesLocalStore implements LocalStore {
     }
 
     @Override
-    public void setAccount(String displayName, String email, String photoUrl) {
+    public void setUser(User user) {
         context.getSharedPreferences(PREF_TAG, 0).edit()
-                .putString("email", email)
-                .putString("userName", displayName)
-                .putString("photoUrl", photoUrl)
+                .putString(UID, user.getUid())
+                .putString(EMAIL, user.getEmail())
+                .putString(GIVEN_NAME, user.getGivenName())
+                .putString(FAMILY_NAME, user.getFamilyName())
+                .putString(PHOTO_URL, user.getProfileImageURL())
                 .apply();
     }
 
     @Override
-    public void clearAccount() {
+    public void clearUser() {
         // Add abstraction
         context.getSharedPreferences(PREF_TAG, 0).edit()
-                .remove("email")
-                .remove("userName")
-                .remove("photoUrl")
+                .remove(UID)
+                .remove(EMAIL)
+                .remove(GIVEN_NAME)
+                .remove(FAMILY_NAME)
+                .remove(PHOTO_URL)
                 .apply();
     }
 
     @Override
-    public Optional<Account> getAccount() {
+    public Optional<User> getUser() {
         if (context.getSharedPreferences(PREF_TAG, 0).contains("email")) {
-            String email = context.getSharedPreferences(PREF_TAG, 0).getString("email", "");
-            String userName = context.getSharedPreferences(PREF_TAG, 0).getString("userName", "");
-            String photoUrl = context.getSharedPreferences(PREF_TAG, 0).getString("photoUrl", "");
+            String uid = context.getSharedPreferences(PREF_TAG, 0).getString(UID, "");
+            String email = context.getSharedPreferences(PREF_TAG, 0).getString(EMAIL, "");
+            String givenName = context.getSharedPreferences(PREF_TAG, 0).getString(GIVEN_NAME, "");
+            String familyName = context.getSharedPreferences(PREF_TAG, 0).getString(FAMILY_NAME, "");
+            String photo = context.getSharedPreferences(PREF_TAG, 0).getString(PHOTO_URL, "");
 
-            Account account = new Account(email, userName, photoUrl);
-            return Optional.of(account);
+            User user = new User(uid, email, givenName, familyName);
+            if (!photo.isEmpty()) {
+                user.setProfileImageURL(photo);
+            }
+
+            return Optional.of(user);
         }
 
         return Optional.absent();
-    }
-
-    @Override
-    public void setUser(User user) {
-        // todo
     }
 }

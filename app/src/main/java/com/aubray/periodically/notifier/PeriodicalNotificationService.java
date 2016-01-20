@@ -11,8 +11,8 @@ import android.support.v4.app.NotificationCompat;
 import com.aubray.periodically.R;
 import com.aubray.periodically.activities.PeriodicalsActivity;
 import com.aubray.periodically.logic.Periodicals;
-import com.aubray.periodically.model.Account;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
 import com.aubray.periodically.store.LocalStore;
@@ -41,14 +41,14 @@ public class PeriodicalNotificationService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Optional<Account> account = localStore.getAccount();
-        if (!account.isPresent()) {
+        Optional<User> user = localStore.getUser();
+        if (!user.isPresent()) {
             return;
         }
 
         cloudStore = new FirebaseCloudStore(this);
 
-        cloudStore.addPeriodicalsListener(account.get().email, new Callback<List<Periodical>>() {
+        cloudStore.addPeriodicalsListener(user.get(), new Callback<List<Periodical>>() {
             @Override
             public void receive(List<Periodical> periodicals) {
                 // find due periodicals

@@ -64,7 +64,7 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
-    public void addPeriodicalsListener(final String user, final Callback<List<Periodical>> callback) {
+    public void addPeriodicalsListener(final User user, final Callback<List<Periodical>> callback) {
         fb.child(PERIODICALS).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
@@ -73,7 +73,7 @@ public class FirebaseCloudStore implements CloudStore {
                         .filter(new Predicate<Periodical>() {
                             @Override
                             public boolean apply(Periodical periodical) {
-                                return periodical.getSubscribers().contains(user);
+                                return periodical.getSubscribers().contains(user.getUid());
                             }
                         })
                         .toList());
@@ -93,6 +93,11 @@ public class FirebaseCloudStore implements CloudStore {
     @Override
     public void googleLogin(String email, Callback<User> callback) {
         new FirebaseLoginTask(callback).execute(email);
+    }
+
+    @Override
+    public void googleLogout() {
+        fb.unauth();
     }
 
     static Map<String, String> emailToUidMap = Maps.newConcurrentMap();

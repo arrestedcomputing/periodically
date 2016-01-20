@@ -46,14 +46,14 @@ public class SubscriberArrayAdapter extends ArrayAdapter<String> {
         final TextView textView = (TextView) convertView.findViewById(R.id.subscriber_text);
 
         // object item based on the position
-        final String subscriberEmail = subscribers.get(position);
+        final String subscriberUid = subscribers.get(position);
 
-        cloudStore.lookUpUserByEmail(subscriberEmail, new Callback<User>() {
+        cloudStore.lookUpUserByUid(subscriberUid, new Callback<User>() {
             @Override
             public void receive(User user) {
                 String name = user.getGivenName();
 
-                if (subscriberEmail.equals(owner)) {
+                if (subscriberUid.equals(owner)) {
                     name = name + " (owner)";
                 }
 

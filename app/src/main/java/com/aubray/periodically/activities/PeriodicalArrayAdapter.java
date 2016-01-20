@@ -26,6 +26,7 @@ import java.util.List;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.aubray.periodically.ui.PeriodicalFormatter.printFriendlyDate;
+import static org.joda.time.Instant.now;
 
 // here's our beautiful adapter
 public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
@@ -71,21 +72,26 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
         period.setText(periodical.getPeriod().toString());
 
         TextView due = (TextView) convertView.findViewById(R.id.due_text);
-        due.setText(PeriodicalFormatter.printFriendlyDate(Periodicals.getDueInstant(periodical), Instant.now()));
+        Instant dueInstant = Periodicals.getDueInstant(periodical);
+        if (dueInstant.isBefore(now())) {
+            due.setText("Due Now");
+        } else {
+            due.setText(PeriodicalFormatter.printFriendlyDate(dueInstant, now()));
+        }
 
         final TextView lastUser = (TextView) convertView.findViewById(R.id.last_user_text_view);
         final TextView lastUserLabel = (TextView) convertView.findViewById(R.id.last_user_label);
         final Optional<Event> event = Periodicals.getLastEvent(periodical);
 
         if (event.isPresent()) {
-            cloudStore.lookUpUserByEmail(event.get().getUser(), new LoggingCallback<User>("userByEmail") {
+            cloudStore.lookUpUserByUid(event.get().getUser(), new LoggingCallback<User>("userByEmail") {
                 @Override
                 public void receive(User user) {
                     log();
                     lastUserLabel.setVisibility(VISIBLE);
                     lastUser.setVisibility(VISIBLE);
                     lastUser.setText(user.getGivenName() + " " +
-                            printFriendlyDate(new Instant(event.get().getMillis()), Instant.now()));
+                            printFriendlyDate(new Instant(event.get().getMillis()), now()));
                 }
             });
         } else {

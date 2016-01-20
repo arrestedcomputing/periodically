@@ -27,12 +27,12 @@ public class Periodical {
         return events;
     }
 
-    public Periodical(String name, String owner) {
+    public Periodical(String name, User owner) {
         id = randomUUID().toString();
         createTimeMillis = currentTimeMillis();
         this.name = name;
-        this.owner = owner;
-        subscribers.add(owner);
+        this.owner = owner.getUid();
+        subscribers.add(owner.getUid());
     }
 
     // For Test
@@ -46,8 +46,8 @@ public class Periodical {
         return id;
     }
 
-    public void addSubscriber(String user) {
-        subscribers.add(user);
+    public void addSubscriber(User user) {
+        subscribers.add(user.getUid());
     }
 
     public String getName() {
@@ -76,16 +76,16 @@ public class Periodical {
         return createTimeMillis;
     }
 
-    public void didIt(String userId, long millis) {
-        events.add(new Event(userId, millis));
+    public void didIt(User user, long millis) {
+        events.add(new Event(user.getUid(), millis));
     }
 
     public String toString() {
         return name;
     }
 
-    public void removeSubscriber(String user) {
-        subscribers.remove(user);
+    public void removeSubscriber(User user) {
+        subscribers.remove(user.getUid());
     }
 
     public void setStartTimeMillis(long startTimeMillis) {

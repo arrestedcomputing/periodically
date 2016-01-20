@@ -23,6 +23,7 @@ import com.aubray.periodically.R;
 import com.aubray.periodically.logic.Periodicals;
 import com.aubray.periodically.model.Period;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
 import com.aubray.periodically.store.LocalStore;
@@ -97,7 +98,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
         TextView startingLabel = (TextView) findViewById(R.id.start_label);
 
         if (periodical == null) {
-            periodical = new Periodical(DEFAULT_NAME, localStore.getAccount().get().email);
+            periodical = new Periodical(DEFAULT_NAME, localStore.getUser().get());
             periodical.setPeriod(new Period(TimeUnit.Days, 1));
         }
 
@@ -157,8 +158,8 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_delete) {
-            String email = localStore.getAccount().get().email;
-            if (periodical.getOwner().equals(email)) {
+            String uuid = localStore.getUser().get().getUid();
+            if (periodical.getOwner().equals(uuid)) {
                 delete();
             } else {
                 unsubscribe();
@@ -183,8 +184,14 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String email = input.getText().toString();
-                periodical.addSubscriber(email);
-                cloudStore.savePeriodical(periodical);
+
+                cloudStore.lookUpUserByEmail(email, new Callback<User>() {
+                    @Override
+                    public void receive(User user) {
+                        periodical.addSubscriber(user);
+                        cloudStore.savePeriodical(periodical);
+                    }
+                });
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -226,7 +233,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
                 .setPositiveButton("Unsubscribe", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        periodical.removeSubscriber(localStore.getAccount().get().email);
+                        periodical.removeSubscriber(localStore.getUser().get());
                         cloudStore.savePeriodical(periodical);
 
                         Toast.makeText(EditPeriodicalActivity.this, "Unsubscribed from " + periodical.getName(),
