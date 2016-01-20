@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".activities.EditPeriodicalActivity"
+    tools:showIn="@layout/activity_edit_periodical">
+
+    <TextView
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:id="@+id/periodical_name"
+        android:width="300dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:elegantTextHeight="false"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Periodical Name"
+        android:textSize="25dp" />
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="2"
+        android:id="@+id/gridLayout"
+        android:layout_below="@+id/periodical_name"
+        android:layout_centerHorizontal="true"
+        android:padding="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Due every"
+            android:id="@+id/textView"
+            android:layout_below="@+id/periodical_name"
+            android:layout_toStartOf="@+id/frequency_edit_text"
+            android:layout_marginEnd="29dp"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:layout_gravity="center|right"
+            android:padding="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Set Period"
+            android:id="@+id/period_text"
+            android:layout_alignBottom="@+id/gridLayout3"
+            android:layout_toEndOf="@+id/gridLayout3"
+            android:textStyle="italic"
+            android:layout_gravity="center_horizontal"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:padding="10dp"
+            android:textColor="#ec0606" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Starting"
+            android:id="@+id/start_label"
+            android:layout_below="@+id/periodical_name"
+            android:layout_toStartOf="@+id/editText"
+            android:layout_marginEnd="29dp"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:layout_gravity="center|right"
+            android:padding="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Default"
+            android:id="@+id/starting_text"
+            android:layout_alignBottom="@+id/gridLayout3"
+            android:layout_toEndOf="@+id/gridLayout3"
+            android:textStyle="italic"
+            android:padding="10dp" />
+    </GridLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/gridLayout"
+        android:layout_alignParentStart="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Subscribers"
+            android:id="@+id/subscribers_label"
+            android:layout_below="@+id/gridLayout"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="31dp" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:id="@+id/subscribers_view"
+            android:layout_below="@+id/subscribers_label"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="21dp"
+            android:layout_above="@+id/history_label"
+            android:choiceMode="none" />
+
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="History"
+            android:id="@+id/history_label"
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true" />
+
+        <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:id="@+id/history_view"
+            android:layout_below="@+id/history_label"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="22dp"
+            android:choiceMode="none" />
+
+    </LinearLayout>
+
+</RelativeLayout>

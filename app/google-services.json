@@ -1,0 +1,59 @@
+{
+  "project_info": {
+    "project_id": "periodically-78a55",
+    "project_number": "488948556773",
+    "name": "Periodically"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:488948556773:android:c37a075a763cdd19",
+        "client_id": "android:com.aubray.periodically",
+        "client_type": 1,
+        "android_client_info": {
+          "package_name": "com.aubray.periodically"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "488948556773-oieloa9fuhuk249s521m0h13uoki5m7a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aubray.periodically",
+            "certificate_hash": "5CABAB8B3A1422ABE30396DB35C89455FC5D17FA"
+          }
+        },
+        {
+          "client_id": "488948556773-g8k9u1tarbc7ksnght16on6i76otiuo2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aubray.periodically",
+            "certificate_hash": "13EB59BD4D052DF45E10C8FEA63268312D1EC9D2"
+          }
+        }
+      ],
+      "api_key": [],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "cloud_messaging_service": {
+          "status": 1,
+          "apns_config": []
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "google_signin_service": {
+          "status": 2
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "client_info": [],
+  "ARTIFACT_VERSION": "1"
+}
