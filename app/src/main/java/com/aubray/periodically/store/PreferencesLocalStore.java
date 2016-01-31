@@ -15,6 +15,7 @@ public class PreferencesLocalStore implements LocalStore {
     public static final String GIVEN_NAME = "givenName";
     public static final String FAMILY_NAME = "familyName";
     public static final String PHOTO_URL = "photoUrl";
+
     private final Context context;
 
     public PreferencesLocalStore(Context context) {

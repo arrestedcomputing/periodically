@@ -38,27 +38,43 @@ public class PeriodicalNotificationService extends IntentService {
 
     CloudStore cloudStore;
     LocalStore localStore = new PreferencesLocalStore(this);
+    NotificationManager notificationManager;
 
     @Override
     protected void onHandleIntent(Intent intent) {
+
+        cloudStore = new FirebaseCloudStore(this);
+        notificationManager =
+        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
         Optional<User> user = localStore.getUser();
         if (!user.isPresent()) {
             return;
         }
 
-        cloudStore = new FirebaseCloudStore(this);
-
-        cloudStore.addPeriodicalsListener(user.get(), new Callback<List<Periodical>>() {
+        cloudStore.lookUpPeriodicals(user.get(), new Callback<List<String>>() {
             @Override
-            public void receive(List<Periodical> periodicals) {
-                // find due periodicals
-                for (Periodical p : periodicals) {
-                    if (Periodicals.isDue(p, Instant.now())) {
-                        notifyDue(p);
-                    }
+            public void receive(List<String> pids) {
+                // todo cancel notifications for pids not in list
+
+                for (String pid : pids) {
+                    cloudStore.lookUpPeriodical(pid, new Callback<Periodical>() {
+                        @Override
+                        public void receive(Periodical p) {
+                            if (Periodicals.isDue(p, Instant.now())) {
+                                notifyDue(p);
+                            } else {
+                                cancelNotifications(p);
+                            }
+                        }
+                    });
                 }
             }
         });
+    }
+
+    private void cancelNotifications(Periodical periodical) {
+        notificationManager.cancel(TAG, periodical.getId().hashCode());
     }
 
     private void notifyDue(Periodical periodical) {
@@ -78,9 +94,6 @@ public class PeriodicalNotificationService extends IntentService {
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
         mBuilder.setContentIntent(resultPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        mNotificationManager.notify(TAG, periodical.getId().hashCode(), mBuilder.build());
+        notificationManager.notify(TAG, periodical.getId().hashCode(), mBuilder.build());
     }
 }

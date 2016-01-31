@@ -10,15 +10,18 @@ import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
+import com.firebase.client.GenericTypeIndicator;
+import com.firebase.client.MutableData;
+import com.firebase.client.Transaction;
 import com.firebase.client.ValueEventListener;
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
+import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +34,10 @@ public class FirebaseCloudStore implements CloudStore {
     public static final String PROVIDER = "google";
 
     private static final String PERIODICALS = "periodicals";
-    public static final String EMAIL_TO_UID_INDEX = "emailToUidIndex";
     public static final String USERS = "users";
+    public static final String EMAIL_TO_UID_INDEX = "emailToUidIndex";
+    public static final String SUBSCRIPTIONS_INDEX = "uidToSubscriptionsIndex";
+    public static final String INVITATIONS = "invitations";
 
     private final Firebase fb;
     private final Context context;
@@ -59,30 +64,95 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
-    public void savePeriodical(Periodical periodical) {
-        fb.child(PERIODICALS).child(periodical.getId()).setValue(periodical);
+    public void addPeriodicalListener(String id, final Callback<Periodical> callback) {
+        fb.child(PERIODICALS).child(id).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                callback.receive(TO_PERIODICAL.apply(dataSnapshot));
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                System.err.println(firebaseError);
+            }
+        });
     }
 
     @Override
-    public void addPeriodicalsListener(final User user, final Callback<List<Periodical>> callback) {
-        fb.child(PERIODICALS).addValueEventListener(new ValueEventListener() {
+    public void savePeriodical(final Periodical periodical) {
+        System.out.println("saving periodical " + periodical);
+        fb.child(PERIODICALS).child(periodical.getId()).setValue(periodical);
+
+        for (final String uid : periodical.getSubscribers()) {
+            System.out.println("updating index for " + uid);
+
+            fb.child(SUBSCRIPTIONS_INDEX).child(uid).runTransaction(new Transaction.Handler() {
+                @Override
+                public Transaction.Result doTransaction(MutableData mutableData) {
+
+                    System.out.println("in mutableData = " + mutableData);
+
+                    List<String> subscriptions =
+                            mutableData.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                    if (subscriptions == null) {
+                        subscriptions = new ArrayList<String>();
+                    }
+
+                    System.out.println("initial entry = " + subscriptions);
+
+                    if (!subscriptions.contains(periodical.getId())) {
+                        subscriptions.add(periodical.getId());
+                        mutableData.setValue(subscriptions);
+                        return Transaction.success(mutableData);
+                    }
+
+                    return Transaction.abort();
+                }
+
+                @Override
+                public void onComplete(FirebaseError firebaseError, boolean b, DataSnapshot dataSnapshot) {
+                    System.out.println("firebaseError = " + firebaseError);
+                    System.out.println("Complete = " + dataSnapshot);
+                }
+            });
+        }
+    }
+
+    @Override
+    public void addPeriodicalsListener(final User user, final Callback<List<String>> callback) {
+        fb.child(SUBSCRIPTIONS_INDEX).child(user.getUid())
+                .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                callback.receive(FluentIterable.from(snapshot.getChildren())
-                        .transform(TO_PERIODICAL)
-                        .filter(new Predicate<Periodical>() {
-                            @Override
-                            public boolean apply(Periodical periodical) {
-                                return periodical.getSubscribers().contains(user.getUid());
-                            }
-                        })
-                        .toList());
+                List<String> subscriptions =
+                        snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                callback.receive(subscriptions);
             }
 
             @Override public void onCancelled(FirebaseError firebaseError) {
                 System.err.println(firebaseError);
             }
         });
+    }
+
+    @Override
+    public void lookUpPeriodicals(final User user, final Callback<List<String>> callback) {
+        fb.child(SUBSCRIPTIONS_INDEX).child(user.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        List<String> subscriptions =
+                                snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                        callback.receive(subscriptions);
+                    }
+
+                    @Override public void onCancelled(FirebaseError firebaseError) {
+                        System.err.println(firebaseError);
+                    }
+                });
     }
 
     @Override
@@ -104,18 +174,29 @@ public class FirebaseCloudStore implements CloudStore {
     static Map<String, User> uidToUserMap = Maps.newConcurrentMap();
 
     @Override
-    public void lookUpUserByEmail(final String email, final Callback<User> callback) {
+    public void lookUpUserByEmail(final String email, final Callback<Optional<User>> callback) {
+        final Callback<User> userCallback = new Callback<User>() {
+            @Override
+            public void receive(User user) {
+                callback.receive(Optional.of(user));
+            }
+        };
+
         if (emailToUidMap.containsKey(email)) {
-            lookUpUserByUid(emailToUidMap.get(email), callback);
+            lookUpUserByUid(emailToUidMap.get(email), userCallback);
         }
 
         fb.child(EMAIL_TO_UID_INDEX).child(sanitizeEmail(email))
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        String uid = dataSnapshot.getValue(String.class);
-                        emailToUidMap.put(email, uid);
-                        lookUpUserByUid(uid, callback);
+                        if (dataSnapshot.exists()) {
+                            String uid = dataSnapshot.getValue(String.class);
+                            emailToUidMap.put(email, uid);
+                            lookUpUserByUid(uid, userCallback);
+                        } else {
+                            callback.receive(Optional.<User>absent());
+                        }
                     }
 
                     @Override
@@ -145,6 +226,11 @@ public class FirebaseCloudStore implements CloudStore {
                         System.out.println("BUSE: " + firebaseError);
                     }
                 });
+    }
+
+    @Override
+    public void invite(User inviter, User invitee, Periodical periodical) {
+
     }
 
     private class FirebaseLoginTask extends AsyncTask<String, Void, Void> {

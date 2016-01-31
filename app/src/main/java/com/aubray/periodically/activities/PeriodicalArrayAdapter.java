@@ -16,44 +16,38 @@ import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
 import com.aubray.periodically.ui.PeriodicalFormatter;
-import com.aubray.periodically.util.LoggingCallback;
+import com.aubray.periodically.util.Callback;
 import com.google.common.base.Optional;
 
 import org.joda.time.Instant;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.aubray.periodically.ui.PeriodicalFormatter.printFriendlyDate;
 import static org.joda.time.Instant.now;
 
-// here's our beautiful adapter
 public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
 
     Context mContext;
     int layoutResourceId;
-    List<Periodical> data = null;
+    SortedSet<Periodical> data = new TreeSet<>(Periodicals.NEXT_DUE_FIRST);
     CloudStore cloudStore;
 
-    public PeriodicalArrayAdapter(Context mContext, int layoutResourceId, List<Periodical> data) {
-        super(mContext, layoutResourceId, data);
+    public PeriodicalArrayAdapter(Context mContext, int layoutResourceId) {
+        super(mContext, layoutResourceId);
         cloudStore = new FirebaseCloudStore(mContext);
 
         this.layoutResourceId = layoutResourceId;
         this.mContext = mContext;
-        this.data = data;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
-        /*
-         * The convertView argument is essentially a "ScrapView" as described is Lucas post
-         * http://lucasr.org/2012/04/05/performance-tips-for-androids-listview/
-         * It will have a non-null value when ListView is asking you recycle the row layout.
-         * So, when convertView is not null, you should simply update its contents instead of inflating a new row layout.
-         */
         if(convertView == null){
             // inflate the layout
             LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
@@ -61,7 +55,7 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
         }
 
         // object item based on the position
-        Periodical periodical = data.get(position);
+        Periodical periodical = getItem(position);
 
         // get the TextView and then set the text (item name) and tag (item ID) values
         TextView periodicalName = (TextView) convertView.findViewById(R.id.periodical_name_text);
@@ -84,10 +78,9 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
         final Optional<Event> event = Periodicals.getLastEvent(periodical);
 
         if (event.isPresent()) {
-            cloudStore.lookUpUserByUid(event.get().getUser(), new LoggingCallback<User>("userByEmail") {
+            cloudStore.lookUpUserByUid(event.get().getUser(), new Callback<User>() {
                 @Override
                 public void receive(User user) {
-                    log();
                     lastUserLabel.setVisibility(VISIBLE);
                     lastUser.setVisibility(VISIBLE);
                     lastUser.setText(user.getGivenName() + " " +
@@ -100,5 +93,27 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
         }
 
         return convertView;
+    }
+
+    public void addOrUpdate(Periodical periodical) {
+        data.add(periodical);
+
+        remove(periodical);
+        add(periodical);
+        sort(Periodicals.NEXT_DUE_FIRST);
+
+        notifyDataSetChanged();
+    }
+
+    public void removePeriodicalsNotIn(List<String> periodicals) {
+        List<Periodical> toRemove = new ArrayList<>();
+        for (Periodical periodical : data) {
+            if (!periodicals.contains(periodical.getId())) {
+                toRemove.add(periodical);
+                remove(periodical);
+            }
+        }
+        data.removeAll(toRemove);
+        notifyDataSetChanged();
     }
 }

@@ -36,8 +36,6 @@ import com.google.common.base.Optional;
 
 import java.util.List;
 
-import static com.aubray.periodically.logic.Periodicals.NEXT_DUE_FIRST;
-
 public class PeriodicalsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -82,29 +80,43 @@ public class PeriodicalsActivity extends AppCompatActivity
             Intent intent = new Intent(PeriodicalsActivity.this, LoginActivity.class);
             startActivity(intent);
         } else {
-            cloudStore.addPeriodicalsListener(user.get(), new Callback<List<Periodical>>() {
+            if (adapter == null) {
+                initListAdapter();
+            }
+
+            cloudStore.addPeriodicalsListener(user.get(), new Callback<List<String>>() {
                 @Override
-                public void receive(List<Periodical> periodicals) {
+                public void receive(List<String> periodicals) {
+                    System.out.println("My periodicals = " + periodicals);
+
                     ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress);
                     progressBar.setVisibility(View.INVISIBLE);
-                    populatePeriodicalsList(periodicals);
+
+                    adapter.removePeriodicalsNotIn(periodicals);
+
+                    for (String pid : periodicals) {
+                        cloudStore.addPeriodicalListener(pid, new Callback<Periodical>() {
+                            @Override
+                            public void receive(Periodical periodical) {
+                                System.out.println("adding = " + periodical);
+                                adapter.addOrUpdate(periodical);
+                            }
+                        });
+                    }
                 }
             });
         }
     }
 
-    void populatePeriodicalsList(List<Periodical> periodicals) {
-        final List<Periodical> sortedPeriodicals = NEXT_DUE_FIRST.sortedCopy(periodicals);
+    void initListAdapter() {
+        adapter = new PeriodicalArrayAdapter(this, R.layout.periodical_row_item);
 
-        adapter =
-                new PeriodicalArrayAdapter(this, R.layout.periodical_row_item, sortedPeriodicals);
-
-        ListView listView = (ListView) findViewById(R.id.periodicals_list_view);
+        final ListView listView = (ListView) findViewById(R.id.periodicals_list_view);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final Periodical clickedPeriodical = sortedPeriodicals.get(position);
+                final Periodical clickedPeriodical = adapter.getItem(position);
                 new AlertDialog.Builder(PeriodicalsActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle("Confirm periodical done")
@@ -138,7 +150,7 @@ public class PeriodicalsActivity extends AppCompatActivity
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Periodical periodicalToEdit = sortedPeriodicals.get(position);
+                Periodical periodicalToEdit = adapter.getItem(position);
 
                 Intent intent = new Intent(PeriodicalsActivity.this, EditPeriodicalActivity.class);
                 intent.putExtra("periodicalId", periodicalToEdit.getId());

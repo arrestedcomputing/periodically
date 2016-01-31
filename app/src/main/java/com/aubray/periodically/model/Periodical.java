@@ -47,7 +47,9 @@ public class Periodical {
     }
 
     public void addSubscriber(User user) {
-        subscribers.add(user.getUid());
+        if (!subscribers.contains(user.getUid())) {
+            subscribers.add(user.getUid());
+        }
     }
 
     public String getName() {
@@ -94,5 +96,21 @@ public class Periodical {
 
     public Optional<Long> optionalStartTime() {
         return startTimeMillis > 0 ? Optional.of(startTimeMillis) : Optional.<Long>absent();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Periodical that = (Periodical) o;
+
+        return id.equals(that.id);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

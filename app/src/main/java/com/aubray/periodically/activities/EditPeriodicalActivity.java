@@ -31,6 +31,7 @@ import com.aubray.periodically.store.PreferencesLocalStore;
 import com.aubray.periodically.ui.PeriodicalFormatter;
 import com.aubray.periodically.util.Callback;
 import com.aubray.periodically.util.TimeUnit;
+import com.google.common.base.Optional;
 
 import org.joda.time.Instant;
 import org.joda.time.LocalDate;
@@ -183,19 +184,23 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
         builder.setPositiveButton("Share", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String email = input.getText().toString();
+                final String email = input.getText().toString();
 
-                cloudStore.lookUpUserByEmail(email, new Callback<User>() {
+                cloudStore.lookUpUserByEmail(email, new Callback<Optional<User>>() {
                     @Override
-                    public void receive(User user) {
-                        periodical.addSubscriber(user);
-                        cloudStore.savePeriodical(periodical);
+                    public void receive(Optional<User> optionalUser) {
+                        if (optionalUser.isPresent()) {
+                            periodical.addSubscriber(optionalUser.get());
+                            cloudStore.savePeriodical(periodical);
+                        } else {
+                            Toast.makeText(EditPeriodicalActivity.this,
+                                    "Unknown user: " + email, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
             }
         });
         builder.setNegativeButton("Cancel", null);
-
         builder.show();
     }
 
