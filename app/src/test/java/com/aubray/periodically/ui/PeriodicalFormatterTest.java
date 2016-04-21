@@ -22,7 +22,7 @@ public class PeriodicalFormatterTest {
         periodical.setPeriod(new Period(TimeUnit.Minutes, 5));
 
         assertThat(PeriodicalFormatter.printDueDate(periodical))
-                .isEqualTo("Oct 20, 2015 1:05:00 AM");
+                .isEqualTo("Oct 20, 2015");
 
         assertThat(PeriodicalFormatter.printRemaining(periodical, createInstant.plus(Duration.standardMinutes(2))))
                 .isEqualTo("3 min");
@@ -35,7 +35,7 @@ public class PeriodicalFormatterTest {
         periodical.setPeriod(new Period(TimeUnit.Months, 5));
 
         assertThat(PeriodicalFormatter.printDueDate(periodical))
-                .isEqualTo("Mar 18, 2016 1:00:00 AM");
+                .isEqualTo("Mar 18, 2016");
 
         Duration timePassed =
                 Duration.standardDays(5)

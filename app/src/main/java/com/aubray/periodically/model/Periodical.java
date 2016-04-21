@@ -46,9 +46,9 @@ public class Periodical {
         return id;
     }
 
-    public void addSubscriber(User user) {
-        if (!subscribers.contains(user.getUid())) {
-            subscribers.add(user.getUid());
+    public void addSubscriber(String uid) {
+        if (!subscribers.contains(uid)) {
+            subscribers.add(uid);
         }
     }
 

@@ -3,6 +3,7 @@ package com.aubray.periodically.logic;
 import com.aubray.periodically.model.Event;
 import com.aubray.periodically.model.Periodical;
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import org.joda.time.Duration;
@@ -34,7 +35,10 @@ public class Periodicals {
             return new Instant(startTimeMillis.get());
         }
 
-        return getLastAction(periodical).plus(asDuration(periodical.getPeriod()));
+        Instant lastAction = getLastAction(periodical);
+        Instant due = lastAction.plus(asDuration(periodical.getPeriod()));
+
+        return due;
     }
 
     public static Duration getRemaining(Periodical periodical, Instant now) {
@@ -48,7 +52,7 @@ public class Periodicals {
     public static Optional<Event> getLastEvent(Periodical periodical) {
         return periodical.getEvents().isEmpty()
                 ? Optional.<Event>absent()
-                : Optional.of(Ordering.natural().max(periodical.getEvents()));
+                : Optional.of(Iterables.getLast(periodical.getEvents()));
     }
 
     private static Instant getLastAction(Periodical periodical) {

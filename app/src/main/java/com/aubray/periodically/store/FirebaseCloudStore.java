@@ -3,6 +3,7 @@ package com.aubray.periodically.store;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import com.aubray.periodically.model.Invitation;
 import com.aubray.periodically.model.Periodical;
 import com.aubray.periodically.model.User;
 import com.aubray.periodically.util.Callback;
@@ -18,6 +19,8 @@ import com.google.android.gms.auth.GoogleAuthException;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
@@ -80,26 +83,18 @@ public class FirebaseCloudStore implements CloudStore {
 
     @Override
     public void savePeriodical(final Periodical periodical) {
-        System.out.println("saving periodical " + periodical);
         fb.child(PERIODICALS).child(periodical.getId()).setValue(periodical);
 
         for (final String uid : periodical.getSubscribers()) {
-            System.out.println("updating index for " + uid);
-
             fb.child(SUBSCRIPTIONS_INDEX).child(uid).runTransaction(new Transaction.Handler() {
                 @Override
                 public Transaction.Result doTransaction(MutableData mutableData) {
-
-                    System.out.println("in mutableData = " + mutableData);
-
                     List<String> subscriptions =
                             mutableData.getValue(new GenericTypeIndicator<List<String>>() {});
 
                     if (subscriptions == null) {
-                        subscriptions = new ArrayList<String>();
+                        subscriptions = new ArrayList<>();
                     }
-
-                    System.out.println("initial entry = " + subscriptions);
 
                     if (!subscriptions.contains(periodical.getId())) {
                         subscriptions.add(periodical.getId());
@@ -156,8 +151,32 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
-    public void deletePeriodical(String id) {
-        fb.child(PERIODICALS).child(id).removeValue();
+    public void deletePeriodical(final Periodical periodical) {
+        fb.child(PERIODICALS).child(periodical.getId()).removeValue();
+
+        // Remove from index of all subscribers
+        for (String subscriber : periodical.getSubscribers()) {
+            fb.child(SUBSCRIPTIONS_INDEX).child(subscriber).runTransaction(new Transaction.Handler() {
+                @Override
+                public Transaction.Result doTransaction(MutableData mutableData) {
+                    List<String> subscriptions =
+                            mutableData.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                    if (subscriptions != null) {
+                        subscriptions.remove(periodical.getId());
+                        mutableData.setValue(subscriptions);
+                        return Transaction.success(mutableData);
+                    }
+
+                    return Transaction.abort();
+                }
+
+                @Override
+                public void onComplete(FirebaseError firebaseError, boolean b, DataSnapshot dataSnapshot) {
+                    System.err.println(firebaseError);
+                }
+            });
+        }
     }
 
     @Override
@@ -229,8 +248,124 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
-    public void invite(User inviter, User invitee, Periodical periodical) {
+    public void invite(final String inviterUid, final String inviteeUid, final String pid) {
+        fb.child(INVITATIONS).child(inviteeUid).runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                List<Invitation> invitations =
+                        mutableData.getValue(new GenericTypeIndicator<List<Invitation>>() {});
 
+                if (invitations == null) {
+                    invitations = new ArrayList<>();
+                }
+
+                invitations.add(new Invitation(inviterUid, inviteeUid, pid));
+
+                mutableData.setValue(invitations);
+
+                return Transaction.success(mutableData);
+            }
+
+            @Override
+            public void onComplete(FirebaseError firebaseError, boolean b, DataSnapshot dataSnapshot) {
+                System.out.println(firebaseError);
+            }
+        });
+    }
+
+    @Override
+    public void addInvitationsListener(String uid, final Callback<List<Invitation>> callback) {
+        fb.child(INVITATIONS).child(uid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Invitation> invitations =
+                        dataSnapshot.getValue(new GenericTypeIndicator<List<Invitation>>() {});
+                if (invitations == null) {
+                    invitations = new ArrayList<>();
+                }
+                callback.receive(invitations);
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                System.err.println(firebaseError);
+            }
+        });
+    }
+
+    @Override
+    public void clearInvitation(final String inviteeUid, final String pid) {
+        fb.child(INVITATIONS).child(inviteeUid).runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                List<Invitation> invitations =
+                        mutableData.getValue(new GenericTypeIndicator<List<Invitation>>() {});
+                if (invitations != null) {
+                    Optional<Invitation> invitation =
+                            Iterables.tryFind(invitations, new Predicate<Invitation>() {
+                        @Override
+                        public boolean apply(Invitation invitation) {
+                            return invitation.getInviteeUid().equals(inviteeUid)
+                                    && invitation.getPeriodicalId().equals(pid);
+                        }
+                    });
+
+                    if (invitation.isPresent()) {
+                        invitations.remove(invitation.get());
+                        mutableData.setValue(invitations);
+                        return Transaction.success(mutableData);
+                    }
+                }
+
+                return Transaction.abort();
+            }
+
+            @Override
+            public void onComplete(FirebaseError firebaseError, boolean b, DataSnapshot dataSnapshot) {
+                if (firebaseError != null) {
+                    System.err.println("firebaseError = " + firebaseError);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void unsubscribe(User user, final Periodical periodical) {
+        periodical.removeSubscriber(user);
+        savePeriodical(periodical);
+
+        // update index
+        fb.child(SUBSCRIPTIONS_INDEX).child(user.getUid()).runTransaction(new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                List<String> subscriptions =
+                        mutableData.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                if (subscriptions != null) {
+                    subscriptions.remove(periodical.getId());
+                    mutableData.setValue(subscriptions);
+                    return Transaction.success(mutableData);
+                }
+
+                return Transaction.abort();
+            }
+
+            @Override
+            public void onComplete(FirebaseError firebaseError, boolean b, DataSnapshot dataSnapshot) {
+                System.err.println(firebaseError);
+            }
+        });
+    }
+
+    @Override
+    public void subscribe(final String uid, final String pid) {
+        lookUpPeriodical(pid, new Callback<Periodical>() {
+            @Override
+            public void receive(Periodical periodical) {
+                periodical.addSubscriber(uid);
+                savePeriodical(periodical);
+            }
+        });
     }
 
     private class FirebaseLoginTask extends AsyncTask<String, Void, Void> {

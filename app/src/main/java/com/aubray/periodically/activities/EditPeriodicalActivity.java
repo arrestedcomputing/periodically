@@ -175,13 +175,13 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
     private void share() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Share");
-        builder.setMessage("Enter email to share");
+        builder.setMessage("Enter email to invite to " + periodical.getName());
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         builder.setView(input);
 
-        builder.setPositiveButton("Share", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Invite", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 final String email = input.getText().toString();
@@ -190,11 +190,14 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
                     @Override
                     public void receive(Optional<User> optionalUser) {
                         if (optionalUser.isPresent()) {
-                            periodical.addSubscriber(optionalUser.get());
-                            cloudStore.savePeriodical(periodical);
+                            cloudStore.invite(localStore.getUser().get().getUid(),
+                                    optionalUser.get().getUid(),
+                                    periodical.getId());
+                            Toast.makeText(EditPeriodicalActivity.this,
+                                    "Invitation sent to " + email, Toast.LENGTH_SHORT).show();
                         } else {
                             Toast.makeText(EditPeriodicalActivity.this,
-                                    "Unknown user: " + email, Toast.LENGTH_SHORT).show();
+                                    "Unknown user " + email, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -216,7 +219,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
                 .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        cloudStore.deletePeriodical(periodical.getId());
+                        cloudStore.deletePeriodical(periodical);
 
                         Toast.makeText(EditPeriodicalActivity.this, "Deleted " + periodical.getName(),
                                 Toast.LENGTH_SHORT).show();
@@ -238,8 +241,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
                 .setPositiveButton("Unsubscribe", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        periodical.removeSubscriber(localStore.getUser().get());
-                        cloudStore.savePeriodical(periodical);
+                        cloudStore.unsubscribe(localStore.getUser().get(), periodical);
 
                         Toast.makeText(EditPeriodicalActivity.this, "Unsubscribed from " + periodical.getName(),
                                 Toast.LENGTH_SHORT).show();

@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-        <item
-            android:id="@+id/nav_account"
-            android:icon="@drawable/ic_account_box"
-            android:title="Account" />
+    <item
+        android:id="@+id/nav_account"
+        android:icon="@drawable/ic_account_box"
+        android:title="Account" />
+
+    <item
+        android:id="@+id/nav_periodicals"
+        android:icon="@drawable/ic_menu_gallery"
+        android:title="My Periodicals" />
+
+    <item
+        android:id="@+id/nav_invitations"
+        android:icon="@drawable/ic_menu_slideshow"
+        android:title="Invitations" />
 
 </menu>

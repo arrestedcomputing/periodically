@@ -36,14 +36,22 @@
         <activity
             android:name=".activities.LogoutActivity"
             android:label="@string/title_activity_logout" />
-        <receiver android:name="com.aubray.periodically.notifier.AndroidStartReceiver">
+
+        <receiver android:name=".notifier.AndroidStartReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
         <service
             android:name=".notifier.PeriodicalNotificationService"
-            android:exported="false"/>
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.InvitationsActivity"
+            android:label="@string/title_activity_invitations"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".activities.TmpDialogActivity"></activity>
     </application>
 
 </manifest>

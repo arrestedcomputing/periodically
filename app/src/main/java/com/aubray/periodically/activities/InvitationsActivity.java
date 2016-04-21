@@ -1,17 +1,14 @@
 package com.aubray.periodically.activities;
 
-import android.app.AlarmManager;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -37,35 +34,27 @@ import com.google.common.base.Optional;
 
 import java.util.List;
 
-public class PeriodicalsActivity extends AppCompatActivity
+public class InvitationsActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    PeriodicalArrayAdapter adapter;
-    LocalStore localStore = new PreferencesLocalStore(this);
+    InvitationsArrayAdapter adapter;
     CloudStore cloudStore;
+    LocalStore localStore = new PreferencesLocalStore(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         cloudStore = new FirebaseCloudStore(this);
 
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_invitations);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final Context activity = this;
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(activity, EditPeriodicalActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.setDrawerListener(new DrawerListener(this, drawer, toolbar));
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_2);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.setDrawerListener(toggle);
+        toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -78,83 +67,66 @@ public class PeriodicalsActivity extends AppCompatActivity
 
         if (!user.isPresent()) {
             // send to login if not logged in
-            Intent intent = new Intent(PeriodicalsActivity.this, LoginActivity.class);
+            Intent intent = new Intent(InvitationsActivity.this, LoginActivity.class);
             startActivity(intent);
         } else {
             if (adapter == null) {
                 initListAdapter();
             }
 
-            cloudStore.addPeriodicalsListener(user.get(), new Callback<List<String>>() {
+            cloudStore.addInvitationsListener(user.get().getUid(), new Callback<List<Invitation>>() {
                 @Override
-                public void receive(List<String> periodicals) {
-                    ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress);
-                    progressBar.setVisibility(View.INVISIBLE);
-
-                    adapter.removePeriodicalsNotIn(periodicals);
-
-                    for (String pid : periodicals) {
-                        cloudStore.addPeriodicalListener(pid, new Callback<Periodical>() {
-                            @Override
-                            public void receive(Periodical periodical) {
-                                adapter.addOrUpdate(periodical);
-                            }
-                        });
-                    }
+                public void receive(List<Invitation> invitations) {
+//                    ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress);
+//                    progressBar.setVisibility(View.INVISIBLE);
+                    adapter.updateData(invitations);
                 }
             });
         }
     }
 
     void initListAdapter() {
-        adapter = new PeriodicalArrayAdapter(this, R.layout.periodical_row_item);
+        adapter = new InvitationsArrayAdapter(this, R.layout.invitation_row_item);
 
-        final ListView listView = (ListView) findViewById(R.id.periodicals_list_view);
+        final ListView listView = (ListView) findViewById(R.id.invitations_list_view);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final Periodical clickedPeriodical = adapter.getItem(position);
-                new AlertDialog.Builder(PeriodicalsActivity.this)
+                final Invitation clickedInvitation = adapter.getItem(position);
+                new AlertDialog.Builder(InvitationsActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setTitle("Confirm periodical done")
-                        .setMessage("Did it?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        .setTitle("Accept or decline invitation")
+                        .setMessage("Do you with to join " + clickedInvitation.getPeriodicalId() + " ?")
+                        .setPositiveButton("Accept", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 Optional<User> user = localStore.getUser();
                                 if (user.isPresent()) {
-                                    clickedPeriodical.didIt(user.get(), System.currentTimeMillis());
-                                    cloudStore.savePeriodical(clickedPeriodical);
+                                    String pid = clickedInvitation.getPeriodicalId();
+                                    cloudStore.clearInvitation(clickedInvitation.getInviteeUid(), pid);
+                                    cloudStore.subscribe(clickedInvitation.getInviteeUid(), pid);
 
-                                    NotificationManager mNotificationManager =
-                                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-                                    mNotificationManager.cancel(PeriodicalNotificationService.TAG, clickedPeriodical.getId().hashCode());
-
-                                    Toast.makeText(PeriodicalsActivity.this, "completed " + clickedPeriodical.getName(),
-                                            Toast.LENGTH_SHORT).show();
+                                    // TODO: maybe clear invitations
                                 } else {
-                                    Toast.makeText(PeriodicalsActivity.this, "not logged in",
+                                    Toast.makeText(InvitationsActivity.this, "not logged in",
                                             Toast.LENGTH_SHORT).show();
                                 }
                             }
 
                         })
-                        .setNegativeButton("No", null)
+                        .setNegativeButton("Decline", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Optional<User> user = localStore.getUser();
+                                if (user.isPresent()) {
+                                    String pid = clickedInvitation.getPeriodicalId();
+                                    cloudStore.clearInvitation(clickedInvitation.getInviteeUid(), pid);
+                                }
+                            }
+                        })
+                        .setCancelable(true)
                         .show();
-            }
-        });
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Periodical periodicalToEdit = adapter.getItem(position);
-
-                Intent intent = new Intent(PeriodicalsActivity.this, EditPeriodicalActivity.class);
-                intent.putExtra("periodicalId", periodicalToEdit.getId());
-                startActivity(intent);
-
-                return true;
             }
         });
     }
@@ -172,7 +144,7 @@ public class PeriodicalsActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.invitations, menu);
         return true;
     }
 
@@ -205,34 +177,16 @@ public class PeriodicalsActivity extends AppCompatActivity
             }
 
             startActivity(intent);
-        } else if (id == R.id.nav_invitations) {
-            Intent intent = new Intent(this, InvitationsActivity.class);
+        } else if (id == R.id.nav_periodicals) {
+            Intent intent = new Intent(this, PeriodicalsActivity.class);
 
             startActivity(intent);
         }
 
         // Otherwise just close the drawer
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_2);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
-    public void onResume() {
-        super.onResume();
-
-        if (adapter != null ) {
-            adapter.notifyDataSetChanged();
-        }
-
-        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent i = new Intent(this, PeriodicalNotificationService.class);
-        PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
-        am.cancel(pi);
-
-        am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    SystemClock.elapsedRealtime() + 60 * 1000,
-                    AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi);
-    }
-
 }

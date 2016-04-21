@@ -2,6 +2,8 @@ package com.aubray.periodically.model;
 
 import android.support.annotation.NonNull;
 
+import org.joda.time.Instant;
+
 /**
  * Action of completeing a periodical
  */
@@ -33,6 +35,6 @@ public class Event implements Comparable<Event> {
     }
 
     public String toString() {
-        return user + "@" + millis;
+        return user + " @ " + new Instant(millis);
     }
 }

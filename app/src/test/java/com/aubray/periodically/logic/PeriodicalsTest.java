@@ -16,8 +16,11 @@ import org.junit.runners.JUnit4;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.aubray.periodically.logic.Periodicals.getDueInstant;
 import static com.aubray.periodically.util.TimeUnit.Minutes;
+import static com.aubray.periodically.util.TimeUnit.Months;
 import static com.google.common.truth.Truth.assertThat;
+import static org.joda.time.Duration.standardDays;
 import static org.joda.time.Duration.standardMinutes;
 
 @RunWith(JUnit4.class)
@@ -34,7 +37,7 @@ public class PeriodicalsTest {
 
         assertThat(Periodicals.getLastEvent(periodical)).isAbsent();
 
-        Instant dueInstant = Periodicals.getDueInstant(periodical);
+        Instant dueInstant = getDueInstant(periodical);
         assertThat(dueInstant).isEqualTo(createInstant.plus(standardMinutes(5)));
 
         Duration remaining = Periodicals.getRemaining(periodical, createInstant.plus(standardMinutes(2)));
@@ -50,9 +53,9 @@ public class PeriodicalsTest {
         periodical.didIt(BUSE_1, createInstant.plus(standardMinutes(2)).getMillis());
         periodical.didIt(BUSE_2, createInstant.plus(standardMinutes(4)).getMillis());
 
-        assertThat(Periodicals.getLastEvent(periodical).get().getUser()).isEqualTo("buse2");
+        assertThat(Periodicals.getLastEvent(periodical).get().getUser()).isEqualTo("456");
 
-        Instant dueInstant = Periodicals.getDueInstant(periodical);
+        Instant dueInstant = getDueInstant(periodical);
         assertThat(dueInstant).isEqualTo(createInstant.plus(standardMinutes(14)));
 
         Duration remaining = Periodicals.getRemaining(periodical, createInstant.plus(standardMinutes(10)));
@@ -80,6 +83,22 @@ public class PeriodicalsTest {
 
         List<Periodical> sorted = Periodicals.NEXT_DUE_FIRST.sortedCopy(Arrays.asList(p1, p2, p3));
         assertThat(sorted).containsExactly(p2, p1, p3).inOrder();
+    }
+
+    @Test
+    public void testPeriodicalWithFirstStartTime() {
+        Instant createInstant = Instant.parse("2015-10-20T01:00:00.000Z");
+        Periodical periodical = new Periodical("id", "Test Periodical", createInstant.getMillis());
+        periodical.setPeriod(new Period(Months, 1));
+        periodical.setStartTimeMillis(createInstant.plus(standardDays(40)).getMillis());
+
+        assertThat(Periodicals.getLastEvent(periodical)).isAbsent();
+
+        assertThat(getDueInstant(periodical)).isEqualTo(createInstant.plus(standardDays(40)));
+
+        periodical.didIt(BUSE_1, createInstant.plus(standardDays(50)).getMillis());
+
+        assertThat(getDueInstant(periodical)).isEqualTo(createInstant.plus(standardDays(80)));
     }
 
     @NonNull
