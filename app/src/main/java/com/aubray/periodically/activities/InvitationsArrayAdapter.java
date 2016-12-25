@@ -27,9 +27,10 @@ public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
 
     CloudStore cloudStore;
 
-    public InvitationsArrayAdapter(Context mContext, int invitation_row_item) {
-        super(mContext, invitation_row_item);
+    public InvitationsArrayAdapter(Context mContext, int layoutResourceId) {
+        super(mContext, layoutResourceId);
         this.mContext = mContext;
+        this.layoutResourceId = layoutResourceId;
         cloudStore = new FirebaseCloudStore(mContext);
     }
 
@@ -44,8 +45,8 @@ public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
         // object item based on the position
         final Invitation invitation = data.get(position);
         final TextView inviterNameView = (TextView) convertView.findViewById(R.id.inviter);
-        final TextView periodicalNameView = (TextView) convertView.findViewById(R.id.periodical_name_text);
-        final TextView periodicalDescView = (TextView) convertView.findViewById(R.id.periodical_description);
+        final TextView periodicalNameView = (TextView) convertView.findViewById(R.id.invitation_periodical_name);
+        final TextView periodicalDescView = (TextView) convertView.findViewById(R.id.invitation_periodical_description);
 
         cloudStore.lookUpUserByUid(invitation.getInviterUid(), new Callback<User>() {
             @Override

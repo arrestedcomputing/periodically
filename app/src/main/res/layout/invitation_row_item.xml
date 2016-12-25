@@ -4,7 +4,7 @@
     android:padding="10dp" >
 
     <TextView
-        android:id="@+id/periodical_text"
+        android:id="@+id/invitation_periodical_name"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -28,8 +28,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="description"
-        android:id="@+id/periodical_description"
-        android:layout_below="@+id/periodical_text"
+        android:id="@+id/invitation_periodical_description"
+        android:layout_below="@+id/invitation_periodical_name"
         android:layout_alignParentStart="true" />
 
 </RelativeLayout>
