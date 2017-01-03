@@ -50,10 +50,6 @@ public class Periodical {
     }
 
     public void addSubscriber(String uid) {
-        if (!subscribers.contains(uid)) {
-            subscribers.add(uid);
-        }
-
         if (!Iterables.any(subscriptions, subscribedUser(uid))) {
             subscriptions.add(new Subscription(uid));
         }
@@ -99,9 +95,6 @@ public class Periodical {
         if (subscription != null) {
             subscriptions.remove(subscription);
         }
-
-        // TODO: Remove this
-        subscribers.remove(user.getUid());
     }
 
     public void setStartTimeMillis(long startTimeMillis) {
@@ -110,13 +103,6 @@ public class Periodical {
 
     public Optional<Long> optionalStartTime() {
         return startTimeMillis > 0 ? Optional.of(startTimeMillis) : Optional.<Long>absent();
-    }
-
-    // TODO: remove this
-    public void sync() {
-        for (String sub : subscribers) {
-            addSubscriber(sub);
-        }
     }
 
     @Override

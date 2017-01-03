@@ -68,11 +68,16 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
-    public void addPeriodicalListener(String id, final Callback<Periodical> callback) {
-        fb.child(PERIODICALS).child(id).addValueEventListener(new ValueEventListener() {
+    public void addPeriodicalListener(String pid, final Callback<Periodical> callback) {
+        fb.child(PERIODICALS).child(pid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                callback.receive(TO_PERIODICAL.apply(dataSnapshot));
+                Periodical changedPeriodical = TO_PERIODICAL.apply(dataSnapshot);
+
+                // Will be null if deleted
+                if (changedPeriodical != null) {
+                    callback.receive(changedPeriodical);
+                }
             }
 
             @Override
@@ -84,9 +89,6 @@ public class FirebaseCloudStore implements CloudStore {
 
     @Override
     public void savePeriodical(final Periodical periodical) {
-        // TODO: temporary
-        periodical.sync();
-
         fb.child(PERIODICALS).child(periodical.getId()).setValue(periodical);
 
         for (final Subscription subscription : periodical.getSubscriptions()) {
