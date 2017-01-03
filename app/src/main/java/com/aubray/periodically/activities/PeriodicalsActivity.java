@@ -1,13 +1,10 @@
 package com.aubray.periodically.activities;
 
-import android.app.AlarmManager;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,9 +21,9 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.aubray.periodically.R;
-import com.aubray.periodically.model.Invitation;
 import com.aubray.periodically.model.Periodical;
 import com.aubray.periodically.model.User;
+import com.aubray.periodically.notifier.AndroidStartReceiver;
 import com.aubray.periodically.notifier.PeriodicalNotificationService;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
@@ -225,14 +222,7 @@ public class PeriodicalsActivity extends AppCompatActivity
             adapter.notifyDataSetChanged();
         }
 
-        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent i = new Intent(this, PeriodicalNotificationService.class);
-        PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
-        am.cancel(pi);
-
-        am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    SystemClock.elapsedRealtime() + 60 * 1000,
-                    AlarmManager.INTERVAL_FIFTEEN_MINUTES, pi);
+        // Ensure the receiver is started
+        AndroidStartReceiver.startNotifier(this);
     }
-
 }

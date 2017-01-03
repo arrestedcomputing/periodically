@@ -12,6 +12,7 @@ import com.aubray.periodically.R;
 import com.aubray.periodically.activities.PeriodicalsActivity;
 import com.aubray.periodically.logic.Periodicals;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.Subscription;
 import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
@@ -47,7 +48,7 @@ public class PeriodicalNotificationService extends IntentService {
         notificationManager =
         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        Optional<User> user = localStore.getUser();
+        final Optional<User> user = localStore.getUser();
         if (!user.isPresent()) {
             return;
         }
@@ -61,7 +62,9 @@ public class PeriodicalNotificationService extends IntentService {
                     cloudStore.lookUpPeriodical(pid, new Callback<Periodical>() {
                         @Override
                         public void receive(Periodical p) {
-                            if (Periodicals.isDue(p, Instant.now())) {
+                            Optional<Subscription> sub = p.getSubscriptionFor(user.get().getUid());
+                            if (sub.isPresent() && !sub.get().isMuted() &&
+                                    Periodicals.isDue(p, Instant.now())) {
                                 notifyDue(p);
                             } else {
                                 cancelNotifications(p);

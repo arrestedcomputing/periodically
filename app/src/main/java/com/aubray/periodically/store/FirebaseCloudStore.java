@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 
 import com.aubray.periodically.model.Invitation;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.Subscription;
 import com.aubray.periodically.model.User;
 import com.aubray.periodically.util.Callback;
 import com.firebase.client.AuthData;
@@ -83,10 +84,13 @@ public class FirebaseCloudStore implements CloudStore {
 
     @Override
     public void savePeriodical(final Periodical periodical) {
+        // TODO: temporary
+        periodical.sync();
+
         fb.child(PERIODICALS).child(periodical.getId()).setValue(periodical);
 
-        for (final String uid : periodical.getSubscribers()) {
-            fb.child(SUBSCRIPTIONS_INDEX).child(uid).runTransaction(new Transaction.Handler() {
+        for (final Subscription subscription : periodical.getSubscriptions()) {
+            fb.child(SUBSCRIPTIONS_INDEX).child(subscription.getUser()).runTransaction(new Transaction.Handler() {
                 @Override
                 public Transaction.Result doTransaction(MutableData mutableData) {
                     List<String> subscriptions =
@@ -155,8 +159,8 @@ public class FirebaseCloudStore implements CloudStore {
         fb.child(PERIODICALS).child(periodical.getId()).removeValue();
 
         // Remove from index of all subscribers
-        for (String subscriber : periodical.getSubscribers()) {
-            fb.child(SUBSCRIPTIONS_INDEX).child(subscriber).runTransaction(new Transaction.Handler() {
+        for (Subscription subscriber : periodical.getSubscriptions()) {
+            fb.child(SUBSCRIPTIONS_INDEX).child(subscriber.getUser()).runTransaction(new Transaction.Handler() {
                 @Override
                 public Transaction.Result doTransaction(MutableData mutableData) {
                     List<String> subscriptions =

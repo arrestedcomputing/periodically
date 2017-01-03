@@ -1,10 +1,12 @@
 package com.aubray.periodically.model;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.aubray.periodically.model.Subscription.subscribedUser;
 import static java.lang.System.currentTimeMillis;
 import static java.util.UUID.randomUUID;
 
@@ -16,6 +18,7 @@ public class Periodical {
     long createTimeMillis;
     String owner;
     List<String> subscribers = new ArrayList<>();
+    List<Subscription> subscriptions = new ArrayList<>();
     List<Event> events = new ArrayList<>();
     long startTimeMillis = -1;
 
@@ -32,7 +35,7 @@ public class Periodical {
         createTimeMillis = currentTimeMillis();
         this.name = name;
         this.owner = owner.getUid();
-        subscribers.add(owner.getUid());
+        addSubscriber(owner.getUid());
     }
 
     // For Test
@@ -50,6 +53,10 @@ public class Periodical {
         if (!subscribers.contains(uid)) {
             subscribers.add(uid);
         }
+
+        if (!Iterables.any(subscriptions, subscribedUser(uid))) {
+            subscriptions.add(new Subscription(uid));
+        }
     }
 
     public String getName() {
@@ -62,8 +69,8 @@ public class Periodical {
         this.name = name;
     }
 
-    public List<String> getSubscribers() {
-        return subscribers;
+    public List<Subscription> getSubscriptions() {
+        return subscriptions;
     }
 
     public Period getPeriod() {
@@ -86,7 +93,14 @@ public class Periodical {
         return name;
     }
 
-    public void removeSubscriber(User user) {
+    public void removeSubscriber(final User user) {
+        Subscription subscription = Iterables.find(subscriptions, subscribedUser(user.getUid()));
+
+        if (subscription != null) {
+            subscriptions.remove(subscription);
+        }
+
+        // TODO: Remove this
         subscribers.remove(user.getUid());
     }
 
@@ -98,6 +112,13 @@ public class Periodical {
         return startTimeMillis > 0 ? Optional.of(startTimeMillis) : Optional.<Long>absent();
     }
 
+    // TODO: remove this
+    public void sync() {
+        for (String sub : subscribers) {
+            addSubscriber(sub);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -106,11 +127,14 @@ public class Periodical {
         Periodical that = (Periodical) o;
 
         return id.equals(that.id);
-
     }
 
     @Override
     public int hashCode() {
         return id.hashCode();
+    }
+
+    public Optional<Subscription> getSubscriptionFor(String uid) {
+        return Iterables.tryFind(subscriptions, subscribedUser(uid));
     }
 }

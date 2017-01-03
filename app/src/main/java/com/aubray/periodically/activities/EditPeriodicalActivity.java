@@ -18,11 +18,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.aubray.periodically.R;
 import com.aubray.periodically.logic.Periodicals;
 import com.aubray.periodically.model.Period;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.Subscription;
 import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
@@ -97,6 +99,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
         TextView periodText = (TextView) findViewById(R.id.period_text);
         TextView startingText = (TextView) findViewById(R.id.starting_text);
         TextView startingLabel = (TextView) findViewById(R.id.start_label);
+        ToggleButton muteToggle = (ToggleButton) findViewById(R.id.mute_toggle);
 
         if (periodical == null) {
             periodical = new Periodical(DEFAULT_NAME, localStore.getUser().get());
@@ -127,9 +130,15 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
             startingLabel.setVisibility(View.GONE);
         }
 
+        Optional<Subscription> sub = periodical.getSubscriptionFor(localStore.getUser().get().getUid());
+        if (sub.isPresent()) {
+            muteToggle.setChecked(!sub.get().isMuted());
+        }
+
         nameText.setOnClickListener(this);
         periodText.setOnClickListener(this);
         startingText.setOnClickListener(this);
+        muteToggle.setOnClickListener(this);
 
         if (periodical.getEvents().isEmpty()) {
             findViewById(R.id.history_view).setVisibility(View.GONE);
@@ -142,7 +151,7 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
             listView.setAdapter(adapter);
         }
 
-        List<String> subscribers = periodical.getSubscribers();
+        List<Subscription> subscribers = periodical.getSubscriptions();
         SubscriberArrayAdapter subscribersAdapter =
                 new SubscriberArrayAdapter(this, R.layout.subscriber_row_item,
                         subscribers, periodical.getOwner());
@@ -267,9 +276,20 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
             case R.id.periodical_name:
                 editName();
                 break;
+            case R.id.mute_toggle:
+                toggleMute();
+                break;
             default:
                 throw new AssertionError();
         }
+    }
+
+    private void toggleMute() {
+        ToggleButton muteToggle = (ToggleButton) findViewById(R.id.mute_toggle);
+        periodical.getSubscriptionFor(localStore.getUser().get().getUid()).get()
+                .setMuted(!muteToggle.isChecked());
+        cloudStore.savePeriodical(periodical);
+        load();
     }
 
     private void editStart() {

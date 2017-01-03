@@ -6,15 +6,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.aubray.periodically.R;
 import com.aubray.periodically.logic.Periodicals;
 import com.aubray.periodically.model.Event;
 import com.aubray.periodically.model.Periodical;
+import com.aubray.periodically.model.Subscription;
 import com.aubray.periodically.model.User;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
+import com.aubray.periodically.store.LocalStore;
+import com.aubray.periodically.store.PreferencesLocalStore;
 import com.aubray.periodically.ui.PeriodicalFormatter;
 import com.aubray.periodically.util.Callback;
 import com.google.common.base.Optional;
@@ -27,6 +31,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 import static com.aubray.periodically.ui.PeriodicalFormatter.printFriendlyDate;
 import static org.joda.time.Instant.now;
@@ -37,10 +42,12 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
     int layoutResourceId;
     SortedSet<Periodical> data = new TreeSet<>(Periodicals.NEXT_DUE_FIRST);
     CloudStore cloudStore;
+    LocalStore localStore;
 
     public PeriodicalArrayAdapter(Context mContext, int layoutResourceId) {
         super(mContext, layoutResourceId);
         cloudStore = new FirebaseCloudStore(mContext);
+        localStore = new PreferencesLocalStore(mContext);
 
         this.layoutResourceId = layoutResourceId;
         this.mContext = mContext;
@@ -90,6 +97,14 @@ public class PeriodicalArrayAdapter extends ArrayAdapter<Periodical> {
         } else {
             lastUserLabel.setVisibility(GONE);
             lastUser.setVisibility(GONE);
+        }
+
+        ImageView muteImage = (ImageView) convertView.findViewById(R.id.mute_image);
+
+        Optional<Subscription> sub = periodical.getSubscriptionFor(localStore.getUser().get().getUid());
+
+        if (sub.isPresent()) {
+            muteImage.setVisibility(sub.get().isMuted() ? VISIBLE : INVISIBLE);
         }
 
         return convertView;

@@ -15,7 +15,6 @@ public class Event implements Comparable<Event> {
         // Do not use (Firebase)
     }
 
-    // For test
     public Event(String userId, long millis) {
         this.user = userId;
         this.millis = millis;
