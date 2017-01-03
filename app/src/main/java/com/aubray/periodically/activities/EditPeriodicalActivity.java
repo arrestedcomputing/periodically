@@ -182,6 +182,8 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
     }
 
     private void share() {
+        System.out.println("share called");
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Share");
         builder.setMessage("Enter email to invite to " + periodical.getName());
@@ -198,6 +200,8 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
                 cloudStore.lookUpUserByEmail(email, new Callback<Optional<User>>() {
                     @Override
                     public void receive(Optional<User> optionalUser) {
+                        System.out.println("revieved user: " + optionalUser);
+
                         if (optionalUser.isPresent()) {
                             cloudStore.invite(localStore.getUser().get().getUid(),
                                     optionalUser.get().getUid(),

@@ -1,5 +1,6 @@
 package com.aubray.periodically.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 
@@ -17,6 +18,7 @@ public class Periodical {
     Period period;
     long createTimeMillis;
     String owner;
+    @JsonIgnore
     List<String> subscribers = new ArrayList<>();
     List<Subscription> subscriptions = new ArrayList<>();
     List<Event> events = new ArrayList<>();

@@ -57,7 +57,12 @@ public class FirebaseCloudStore implements CloudStore {
         fb.child(PERIODICALS).child(id).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                callback.receive(TO_PERIODICAL.apply(dataSnapshot));
+                Periodical changedPeriodical = TO_PERIODICAL.apply(dataSnapshot);
+
+                // Will be null if deleted
+                if (changedPeriodical != null) {
+                    callback.receive(TO_PERIODICAL.apply(dataSnapshot));
+                }
             }
 
             @Override
@@ -124,18 +129,18 @@ public class FirebaseCloudStore implements CloudStore {
     public void addPeriodicalsListener(final User user, final Callback<List<String>> callback) {
         fb.child(SUBSCRIPTIONS_INDEX).child(user.getUid())
                 .addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                List<String> subscriptions =
-                        snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        List<String> subscriptions =
+                                snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
 
-                callback.receive(subscriptions);
-            }
+                        callback.receive(subscriptions);
+                    }
 
-            @Override public void onCancelled(FirebaseError firebaseError) {
-                System.err.println(firebaseError);
-            }
-        });
+                    @Override public void onCancelled(FirebaseError firebaseError) {
+                        System.err.println(firebaseError);
+                    }
+                });
     }
 
     @Override
@@ -209,48 +214,49 @@ public class FirebaseCloudStore implements CloudStore {
 
         if (emailToUidMap.containsKey(email)) {
             lookUpUserByUid(emailToUidMap.get(email), userCallback);
-        }
-
-        fb.child(EMAIL_TO_UID_INDEX).child(sanitizeEmail(email))
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            String uid = dataSnapshot.getValue(String.class);
-                            emailToUidMap.put(email, uid);
-                            lookUpUserByUid(uid, userCallback);
-                        } else {
-                            callback.receive(Optional.<User>absent());
+        } else {
+            fb.child(EMAIL_TO_UID_INDEX).child(sanitizeEmail(email))
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists()) {
+                                String uid = dataSnapshot.getValue(String.class);
+                                emailToUidMap.put(email, uid);
+                                lookUpUserByUid(uid, userCallback);
+                            } else {
+                                callback.receive(Optional.<User>absent());
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onCancelled(FirebaseError firebaseError) {
-                        System.out.println("BUSE: " + firebaseError);
-                    }
-                });
+                        @Override
+                        public void onCancelled(FirebaseError firebaseError) {
+                            System.out.println(firebaseError);
+                        }
+                    });
+        }
     }
 
     @Override
     public void lookUpUserByUid(final String uid, final Callback<User> callback) {
         if (uidToUserMap.containsKey(uid)) {
             callback.receive(uidToUserMap.get(uid));
+        } else {
+
+            fb.child(USERS).child(uid)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            User user = dataSnapshot.getValue(User.class);
+                            uidToUserMap.put(uid, user);
+                            callback.receive(user);
+                        }
+
+                        @Override
+                        public void onCancelled(FirebaseError firebaseError) {
+                            System.out.println(firebaseError);
+                        }
+                    });
         }
-
-        fb.child(USERS).child(uid)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        User user = dataSnapshot.getValue(User.class);
-                        uidToUserMap.put(uid, user);
-                        callback.receive(user);
-                    }
-
-                    @Override
-                    public void onCancelled(FirebaseError firebaseError) {
-                        System.out.println("BUSE: " + firebaseError);
-                    }
-                });
     }
 
     @Override
@@ -309,12 +315,12 @@ public class FirebaseCloudStore implements CloudStore {
                 if (invitations != null) {
                     Optional<Invitation> invitation =
                             Iterables.tryFind(invitations, new Predicate<Invitation>() {
-                        @Override
-                        public boolean apply(Invitation invitation) {
-                            return invitation.getInviteeUid().equals(inviteeUid)
-                                    && invitation.getPeriodicalId().equals(pid);
-                        }
-                    });
+                                @Override
+                                public boolean apply(Invitation invitation) {
+                                    return invitation.getInviteeUid().equals(inviteeUid)
+                                            && invitation.getPeriodicalId().equals(pid);
+                                }
+                            });
 
                     if (invitation.isPresent()) {
                         invitations.remove(invitation.get());
