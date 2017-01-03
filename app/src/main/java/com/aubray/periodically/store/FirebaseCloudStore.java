@@ -272,7 +272,6 @@ public class FirebaseCloudStore implements CloudStore {
                 }
 
                 invitations.add(new Invitation(inviterUid, inviteeUid, pid));
-
                 mutableData.setValue(invitations);
 
                 return Transaction.success(mutableData);

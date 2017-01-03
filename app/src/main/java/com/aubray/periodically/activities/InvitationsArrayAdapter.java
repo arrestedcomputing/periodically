@@ -17,13 +17,15 @@ import com.aubray.periodically.store.FirebaseCloudStore;
 import com.aubray.periodically.util.Callback;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
 
     Context mContext;
     int layoutResourceId;
-    List<Invitation> data = new ArrayList<>();
+    List<Invitation> data;
+    List<String> periodicalNames;
 
     CloudStore cloudStore;
 
@@ -35,7 +37,7 @@ public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         if(convertView==null){
             // inflate the layout
             LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
@@ -60,6 +62,7 @@ public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
             public void receive(Periodical periodical) {
                 periodicalNameView.setText(periodical.getName());
                 periodicalDescView.setText("Due every " + periodical.getPeriod());
+                periodicalNames.set(position, periodical.getName());
             }
         });
 
@@ -68,7 +71,17 @@ public class InvitationsArrayAdapter extends ArrayAdapter<Invitation> {
 
     public void updateData(List<Invitation> invitations) {
         this.data = invitations;
+        this.periodicalNames = new ArrayList<>();
+        periodicalNames.addAll(Collections.nCopies(invitations.size(), ""));
         this.clear();
         this.addAll(invitations);
+    }
+
+    public String getPeriodicalName(int position) {
+        if (position < periodicalNames.size()) {
+            return periodicalNames.get(position);
+        } else {
+            return "";
+        }
     }
 }

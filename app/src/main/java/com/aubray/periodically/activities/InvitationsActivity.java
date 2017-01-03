@@ -98,7 +98,7 @@ public class InvitationsActivity extends AppCompatActivity
                 new AlertDialog.Builder(InvitationsActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setTitle("Accept or decline invitation")
-                        .setMessage("Do you with to join " + clickedInvitation.getPeriodicalId() + " ?")
+                        .setMessage("Do you wish to join " + adapter.getPeriodicalName(position) + "?")
                         .setPositiveButton("Accept", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
