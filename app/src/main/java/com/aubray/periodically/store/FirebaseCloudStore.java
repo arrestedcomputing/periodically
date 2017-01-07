@@ -134,6 +134,10 @@ public class FirebaseCloudStore implements CloudStore {
                         List<String> subscriptions =
                                 snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
 
+                        if (subscriptions == null) {
+                            subscriptions = new ArrayList<>();
+                        }
+
                         callback.receive(subscriptions);
                     }
 
@@ -151,6 +155,10 @@ public class FirebaseCloudStore implements CloudStore {
                     public void onDataChange(DataSnapshot snapshot) {
                         List<String> subscriptions =
                                 snapshot.getValue(new GenericTypeIndicator<List<String>>() {});
+
+                        if (subscriptions == null) {
+                            subscriptions = new ArrayList<>();
+                        }
 
                         callback.receive(subscriptions);
                     }
