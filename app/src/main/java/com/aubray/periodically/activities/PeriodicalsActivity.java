@@ -223,6 +223,6 @@ public class PeriodicalsActivity extends AppCompatActivity
         }
 
         // Ensure the receiver is started
-        AndroidStartReceiver.startNotifier(this);
+        AndroidStartReceiver.start(this);
     }
 }

@@ -24,6 +24,7 @@ import com.aubray.periodically.R;
 import com.aubray.periodically.model.Invitation;
 import com.aubray.periodically.model.Periodical;
 import com.aubray.periodically.model.User;
+import com.aubray.periodically.notifier.InvitationNotificationService;
 import com.aubray.periodically.notifier.PeriodicalNotificationService;
 import com.aubray.periodically.store.CloudStore;
 import com.aubray.periodically.store.FirebaseCloudStore;
@@ -108,7 +109,9 @@ public class InvitationsActivity extends AppCompatActivity
                                     cloudStore.clearInvitation(clickedInvitation.getInviteeUid(), pid);
                                     cloudStore.subscribe(clickedInvitation.getInviteeUid(), pid);
 
-                                    // TODO: maybe clear invitations
+                                    NotificationManager mNotificationManager =
+                                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                                    mNotificationManager.cancel(InvitationNotificationService.TAG, pid.hashCode());
                                 } else {
                                     Toast.makeText(InvitationsActivity.this, "not logged in",
                                             Toast.LENGTH_SHORT).show();
@@ -123,6 +126,10 @@ public class InvitationsActivity extends AppCompatActivity
                                 if (user.isPresent()) {
                                     String pid = clickedInvitation.getPeriodicalId();
                                     cloudStore.clearInvitation(clickedInvitation.getInviteeUid(), pid);
+
+                                    NotificationManager mNotificationManager =
+                                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                                    mNotificationManager.cancel(InvitationNotificationService.TAG, pid.hashCode());
                                 }
                             }
                         })

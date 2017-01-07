@@ -305,6 +305,26 @@ public class FirebaseCloudStore implements CloudStore {
     }
 
     @Override
+    public void lookupInvitations(User user, final Callback<List<Invitation>> callback) {
+        fb.child(INVITATIONS).child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Invitation> invitations =
+                        dataSnapshot.getValue(new GenericTypeIndicator<List<Invitation>>() {});
+                if (invitations == null) {
+                    invitations = new ArrayList<>();
+                }
+                callback.receive(invitations);
+            }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+                System.err.println(firebaseError);
+            }
+        });
+    }
+
+    @Override
     public void clearInvitation(final String inviteeUid, final String pid) {
         fb.child(INVITATIONS).child(inviteeUid).runTransaction(new Transaction.Handler() {
             @Override

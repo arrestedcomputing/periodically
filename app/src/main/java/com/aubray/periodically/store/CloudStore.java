@@ -36,6 +36,8 @@ public interface CloudStore {
 
     void addInvitationsListener(String uid, final Callback<List<Invitation>> callback);
 
+    void lookupInvitations(User uid, Callback<List<Invitation>> callback);
+
     void clearInvitation(String inviteeUid, String pid);
 
     void unsubscribe(User user, Periodical periodical);

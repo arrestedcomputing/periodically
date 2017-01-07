@@ -18,8 +18,6 @@ public class Periodical {
     Period period;
     long createTimeMillis;
     String owner;
-    @JsonIgnore
-    List<String> subscribers = new ArrayList<>();
     List<Subscription> subscriptions = new ArrayList<>();
     List<Event> events = new ArrayList<>();
     long startTimeMillis = -1;

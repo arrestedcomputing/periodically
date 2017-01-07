@@ -43,7 +43,6 @@ public class PeriodicalNotificationService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-
         cloudStore = new FirebaseCloudStore(this);
         notificationManager =
         (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

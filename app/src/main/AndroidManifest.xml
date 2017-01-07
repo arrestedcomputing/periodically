@@ -47,6 +47,10 @@
             android:name=".notifier.PeriodicalNotificationService"
             android:exported="false" />
 
+        <service
+            android:name=".notifier.InvitationNotificationService"
+            android:exported="false" />
+
         <activity
             android:name=".activities.InvitationsActivity"
             android:label="@string/title_activity_invitations"
