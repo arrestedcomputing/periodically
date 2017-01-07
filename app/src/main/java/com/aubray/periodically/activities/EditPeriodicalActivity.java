@@ -63,6 +63,12 @@ public class EditPeriodicalActivity extends AppCompatActivity implements View.On
         cloudStore = new FirebaseCloudStore(this);
         setContentView(R.layout.activity_edit_periodical);
 
+        // Make sure the user is logged in
+        if (!localStore.getUser().isPresent()) {
+            Intent intent = new Intent(EditPeriodicalActivity.this, LoginActivity.class);
+            startActivity(intent);
+        }
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar2);
         setSupportActionBar(toolbar);
 
