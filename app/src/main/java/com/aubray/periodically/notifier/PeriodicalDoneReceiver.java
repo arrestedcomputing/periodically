@@ -25,7 +25,7 @@ public class PeriodicalDoneReceiver extends BroadcastReceiver {
         final CloudStore cloudStore = new FirebaseCloudStore(context);
         final LocalStore localStore = new PreferencesLocalStore(context);
 
-        String periodicalId = intent.getStringExtra("PERIODICAL_ID");
+        String periodicalId = intent.getStringExtra("periodicalId");
 
         cloudStore.lookUpPeriodical(periodicalId, new Callback<Periodical>() {
             @Override

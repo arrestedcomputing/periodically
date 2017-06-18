@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 
 import com.aubray.periodically.R;
+import com.aubray.periodically.activities.EditPeriodicalActivity;
 import com.aubray.periodically.activities.PeriodicalsActivity;
 import com.aubray.periodically.logic.Periodicals;
 import com.aubray.periodically.model.Periodical;
@@ -81,14 +82,26 @@ public class PeriodicalNotificationService extends IntentService {
 
     private void notifyDue(Periodical periodical) {
         Intent markDoneIntent = new Intent(this, PeriodicalDoneReceiver.class);
-        markDoneIntent.putExtra("PERIODICAL_ID", periodical.getId());
+        markDoneIntent.putExtra("periodicalId", periodical.getId());
         PendingIntent markDonePendingIntent =
                 PendingIntent.getBroadcast(this, 0, markDoneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent editIntent = new Intent(this, EditPeriodicalActivity.class);
+        editIntent.putExtra("periodicalId", periodical.getId());
+        TaskStackBuilder stackBuilder1 = TaskStackBuilder.create(this);
+        stackBuilder1.addParentStack(PeriodicalsActivity.class);
+        stackBuilder1.addNextIntent(editIntent);
+        PendingIntent pendingEditIntent =
+                stackBuilder1.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_notification)
                         .addAction(R.drawable.ic_notification, "Done", markDonePendingIntent)
+                        .addAction(R.drawable.ic_notification, "Edit", pendingEditIntent)
                         .setContentTitle(periodical.getName() + " is due!")
                         .setContentText("Came due: " + printDueDate(periodical));
 
