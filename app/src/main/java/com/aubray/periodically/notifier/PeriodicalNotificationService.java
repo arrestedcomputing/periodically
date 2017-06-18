@@ -80,9 +80,15 @@ public class PeriodicalNotificationService extends IntentService {
     }
 
     private void notifyDue(Periodical periodical) {
+        Intent markDoneIntent = new Intent(this, PeriodicalDoneReceiver.class);
+        markDoneIntent.putExtra("PERIODICAL_ID", periodical.getId());
+        PendingIntent markDonePendingIntent =
+                PendingIntent.getBroadcast(this, 0, markDoneIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_notification)
+                        .addAction(R.drawable.ic_notification, "Done", markDonePendingIntent)
                         .setContentTitle(periodical.getName() + " is due!")
                         .setContentText("Came due: " + printDueDate(periodical));
 

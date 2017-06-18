@@ -51,6 +51,10 @@
             android:name=".notifier.InvitationNotificationService"
             android:exported="false" />
 
+        <receiver
+            android:name=".notifier.PeriodicalDoneReceiver"
+            android:exported="false" />
+
         <activity
             android:name=".activities.InvitationsActivity"
             android:label="@string/title_activity_invitations"
